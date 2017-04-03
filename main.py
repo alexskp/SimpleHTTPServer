@@ -62,7 +62,7 @@ def check_client(conn, client_addr):
 	request = utf_data.split("\r\n", 1)[0]
 	method, uri, protocol = request.split(" ", 2)
 	conn_time = time.strftime("[%d/%b/%G %H:%M:%S]")
-	print("%s - - %s \"%s %s %s\" ---" % (client_addr, conn_time ,method, uri, protocol)) #end=' '
+	print("%s - - %s \"%s %s %s\" " % (client_addr, conn_time ,method, uri, protocol), end = ' ')
 	if method == "GET":
 		check_path(conn, uri)
 	else:
@@ -94,7 +94,6 @@ def check_path(conn, path):
 	typ = "text/html; charset=utf-8"
 	state = 200
 
-	print(path)
 	work_path = os.getcwd()
 	if os.path.isdir('.' + path):
 		index = open_index(conn, path)
@@ -117,13 +116,12 @@ def check_path(conn, path):
 		status = "404 Not Found"
 		content = gen_err_page("404 Not Found")
 		typ = "text/html; charset=utf-8"
+	print(status)
 	send_answer(conn, status=status, typ=typ, data=content)
 
 
 def gen_list_dir(path):
 	items = os.listdir('.' + path)
-	print(items)
-
 	items.sort(key=lambda a: a.lower())
 
 	page = "<!DOCTYPE html><html><head>"
@@ -135,7 +133,6 @@ def gen_list_dir(path):
 		#print(os.path.abspath('.' + path + '/' + item))
 		#print(path)
 		link = path + '/' + item
-		print(link)
 		if os.path.isdir('.' + path + '/' + item):
 			item += '/'
 		page += "<li><a href=\"{0:s}\">{1:s}</a></li>".format(link, item)
@@ -160,8 +157,10 @@ try:
 		try:
 			check_client(client_sck, client_addr[0])
 
-		#except:
-			#send_answer(client_sck, "500 Internal Server Error", data="500 Internal Server Error")
+		except:
+			content = gen_err_page("500 Internal Server Error")
+			send_answer(client_sck, "500 Internal Server Error", data=content
+			print("500 Internal Server Error")
 		finally:
 			client_sck.close()
 except KeyboardInterrupt:
