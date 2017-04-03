@@ -35,7 +35,8 @@ def get_port():
 
 
 def send_answer(conn, status="200 OK", typ="text/plain; charset=utf-8", data=""):
-	data = data.encode("utf-8")
+	if "text" in typ:
+		data = data.encode("utf-8")
 	conn.send(b"HTTP/1.1 " + status.encode("utf-8") + b"\r\n")
 	conn.send(b"Server: simplehttp\r\n")
 	conn.send(b"Connection: close\r\n")
@@ -90,24 +91,33 @@ def mimetype_handler(path):
 		return "application/octet-stream"
 
 def check_path(conn, path):
+	typ = "text/html; charset=utf-8"
+	state = 200
+	
 	print(path)
 	work_path = os.getcwd()
 	if os.path.isdir('.' + path):
 		index = open_index(conn, path)
 		status = "200 OK"
 		if not index:
-			data = gen_list_dir(path)
+			content = gen_list_dir(path)
 		else:
-			data = index
+			content = index
 	elif os.path.isfile('.' + path):
-		with open(os.path.normpath('.' + path)) as file:
-			data = file.read()
-		status = "200 OK" 
+		typ = mimetype_handler(path)
+		if "text" in typ:
+			mode = 'r'
+			typ += "; charset=utf-8"
+		else:
+			mode = 'rb'
+		with open(os.path.normpath('.' + path), 'rb') as file:
+			content = file.read()
+		status = "200 OK"
 	else:
 		status = "404 Not Found"
-		data = gen_err_page("404 Not Found")
-
-	send_answer(conn, status=status, typ="text/html;charset=utf-8", data=data)
+		content = gen_err_page("404 Not Found")
+		typ = "text/html; charset=utf-8"
+	send_answer(conn, status=status, typ=typ, data=content)
 
 
 def gen_list_dir(path):
