@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3.5
 
 import socket
 import sys
@@ -132,10 +132,10 @@ def gen_list_dir(path):
 	for item in items:
 		#print(os.path.abspath('.' + path + '/' + item))
 		#print(path)
-		link = path + '/' + item
-		if os.path.isdir('.' + path + '/' + item):
+		link = path + item
+		if os.path.isdir('.' + path + item):
 			item += '/'
-		page += "<li><a href=\"{0:s}\">{1:s}</a></li>".format(link, item)
+		page += "<li><a href=\"{0:s}\">{0:s}</a></li>".format(item)
 	page += "</ul><hr></body></html>"
 	return page
 
@@ -159,7 +159,7 @@ try:
 
 		except:
 			content = gen_err_page("500 Internal Server Error")
-			send_answer(client_sck, "500 Internal Server Error", data=content
+			send_answer(client_sck, "500 Internal Server Error", data=content)
 			print("500 Internal Server Error")
 		finally:
 			client_sck.close()
