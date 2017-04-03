@@ -93,7 +93,7 @@ def mimetype_handler(path):
 def check_path(conn, path):
 	typ = "text/html; charset=utf-8"
 	state = 200
-	
+
 	print(path)
 	work_path = os.getcwd()
 	if os.path.isdir('.' + path):
@@ -110,7 +110,7 @@ def check_path(conn, path):
 			typ += "; charset=utf-8"
 		else:
 			mode = 'rb'
-		with open(os.path.normpath('.' + path), 'rb') as file:
+		with open(os.path.normpath('.' + path), mode) as file:
 			content = file.read()
 		status = "200 OK"
 	else:
