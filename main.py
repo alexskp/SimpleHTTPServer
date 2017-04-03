@@ -5,6 +5,7 @@ import sys
 import os
 import urllib.request
 import time
+import mimetypes
 
 def gen_err_page(err_code='404', mess=' ', err_code_expln=' '):
 	err_page = "<!DOCTYPE html><html><head>"
@@ -74,19 +75,34 @@ def open_index(conn, path):
 	else:
 		return False
 
+
+def mimetype_handler(path):
+	mimetypes.init()
+	file_ext = os.path.splitext(path)[1]
+	custom_ext_map = mimetypes.types_map.copy()
+	custom_ext_map.update({
+		'' : "application/octet-stream",
+		'.py' : "text/plain"
+		})
+	if file_ext in custom_ext_map:
+		return custom_ext_map[file_ext]
+	else:
+		return "application/octet-stream"
+
 def check_path(conn, path):
+	print(path)
 	work_path = os.getcwd()
 	if os.path.isdir('.' + path):
 		index = open_index(conn, path)
 		status = "200 OK"
-		print("zashlo")
 		if not index:
 			data = gen_list_dir(path)
 		else:
 			data = index
 	elif os.path.isfile('.' + path):
-		##############################################
-		print(">>><<<<")##############################
+		with open(os.path.normpath('.' + path)) as file:
+			data = file.read()
+		status = "200 OK" 
 	else:
 		status = "404 Not Found"
 		data = gen_err_page("404 Not Found")
@@ -97,6 +113,7 @@ def check_path(conn, path):
 def gen_list_dir(path):
 	items = os.listdir('.' + path)
 	print(items)
+
 	items.sort(key=lambda a: a.lower())
 
 	page = "<!DOCTYPE html><html><head>"
@@ -105,7 +122,13 @@ def gen_list_dir(path):
 	page += "<body><h1>Directory listing for {0:s}</h1><hr><ul>".format(path)
 
 	for item in items:
-		page += "<li><a href=\"{0:s}\">{0:s}</a></li>".format(item)
+		#print(os.path.abspath('.' + path + '/' + item))
+		#print(path)
+		link = path + '/' + item
+		print(link)
+		if os.path.isdir('.' + path + '/' + item):
+			item += '/'
+		page += "<li><a href=\"{0:s}\">{1:s}</a></li>".format(link, item)
 	page += "</ul><hr></body></html>"
 	return page
 
@@ -113,6 +136,7 @@ def gen_list_dir(path):
 
 
 ###############################################################################
+
 port = get_port()
 serv_sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=0)
 serv_sck.bind(('', port))
