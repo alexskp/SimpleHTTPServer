@@ -3,9 +3,9 @@
 import socket
 import sys
 import os
-import urllib.request
 import time
 import mimetypes
+
 
 def gen_err_page(err_code='404', mess=' ', err_code_expln=' '):
 	err_page = "<!DOCTYPE html><html><head>"
@@ -17,6 +17,7 @@ def gen_err_page(err_code='404', mess=' ', err_code_expln=' '):
 	err_page += "<p>Error code explanation: {:s}.</p>".format(err_code_expln)
 	err_page += "</body></html>"
 	return err_page
+
 
 def get_port():
 	if len(sys.argv) == 2:
@@ -68,6 +69,7 @@ def check_client(conn, client_addr):
 	else:
 		return
 
+
 def open_index(conn, path):
 	for item in ["/index.html", "/index.htm"]:
 		if os.path.isfile('.' + path + item):
@@ -89,6 +91,7 @@ def mimetype_handler(path):
 		return custom_ext_map[file_ext]
 	else:
 		return "application/octet-stream"
+
 
 def check_path(conn, path):
 	typ = "text/html; charset=utf-8"
@@ -140,10 +143,6 @@ def gen_list_dir(path):
 	return page
 
 
-
-
-###############################################################################
-
 port = get_port()
 serv_sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=0)
 serv_sck.bind(('', port))
@@ -156,7 +155,6 @@ try:
 		client_sck, client_addr = serv_sck.accept()
 		try:
 			check_client(client_sck, client_addr[0])
-
 		except:
 			content = gen_err_page("500 Internal Server Error")
 			send_answer(client_sck, "500 Internal Server Error", data=content)
@@ -164,6 +162,6 @@ try:
 		finally:
 			client_sck.close()
 except KeyboardInterrupt:
-	print("KeyboardInterrupt")
+	print("\nKeyboardInterrupt")
 finally:
 	serv_sck.close()
