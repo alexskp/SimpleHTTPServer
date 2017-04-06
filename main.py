@@ -9,7 +9,8 @@ import mimetypes
 
 def gen_err_page(err_code='404', mess=' ', err_code_expln=' '):
 	err_page = "<!DOCTYPE html><html><head>"
-	err_page += "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">"
+	err_page += "<meta http-equiv=\"Content-Type\""
+	err_page += "content=\"text/html;charset=utf-8\">"
 	err_page += "<title>Error response</title></head><body>"
 	err_page += "<h1>Error response</h1>"
 	err_page += "<p>Error code: {:s}</p>".format(err_code)
@@ -35,8 +36,9 @@ def get_port():
 		return 8000
 
 
-def send_answer(conn, status="200 OK", typ="text/plain; charset=utf-8", data=""):
+def send_answer(conn, status="200 OK", typ="text/plain", data=""):
 	if "text" in typ:
+		typ += "; charset=utf-8"
 		data = data.encode("utf-8")
 	conn.send(b"HTTP/1.1 " + status.encode("utf-8") + b"\r\n")
 	conn.send(b"Server: simplehttp\r\n")
@@ -58,12 +60,12 @@ def check_client(conn, client_addr):
 	if not data:
 		return
 
-	#print(data)
 	utf_data = data.decode("utf-8")
 	request = utf_data.split("\r\n", 1)[0]
 	method, uri, protocol = request.split(" ", 2)
 	conn_time = time.strftime("[%d/%b/%G %H:%M:%S]")
-	print("%s - - %s \"%s %s %s\" " % (client_addr, conn_time ,method, uri, protocol), end = ' ')
+	print("%s - - %s \"%s %s %s\" " % (client_addr,
+		  conn_time ,method, uri, protocol), end = ' ')
 	if method == "GET":
 		check_path(conn, uri)
 	else:
@@ -94,10 +96,9 @@ def mimetype_handler(path):
 
 
 def check_path(conn, path):
-	typ = "text/html; charset=utf-8"
-	state = 200
+	typ = "text/html"
+	status = "200 OK"
 
-	work_path = os.getcwd()
 	if os.path.isdir('.' + path):
 		index = open_index(conn, path)
 		status = "200 OK"
@@ -109,7 +110,6 @@ def check_path(conn, path):
 		typ = mimetype_handler(path)
 		if "text" in typ:
 			mode = 'r'
-			typ += "; charset=utf-8"
 		else:
 			mode = 'rb'
 		with open(os.path.normpath('.' + path), mode) as file:
@@ -118,7 +118,7 @@ def check_path(conn, path):
 	else:
 		status = "404 Not Found"
 		content = gen_err_page("404 Not Found")
-		typ = "text/html; charset=utf-8"
+		typ = "text/html"
 	print(status)
 	send_answer(conn, status=status, typ=typ, data=content)
 
@@ -128,14 +128,11 @@ def gen_list_dir(path):
 	items.sort(key=lambda a: a.lower())
 
 	page = "<!DOCTYPE html><html><head>"
-	page += "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\">"
-	page += "<title>Directory listing for {0:s}</title></head>".format(path)
+	page += "<meta http-equiv=\"Content-Type\""
+	page += "content=\"text/html;charset=utf-8\"><title>"
+	page += "Directory listing for {0:s}</title></head>".format(path)
 	page += "<body><h1>Directory listing for {0:s}</h1><hr><ul>".format(path)
-
 	for item in items:
-		#print(os.path.abspath('.' + path + '/' + item))
-		#print(path)
-		link = path + item
 		if os.path.isdir('.' + path + item):
 			item += '/'
 		page += "<li><a href=\"{0:s}\">{0:s}</a></li>".format(item)
@@ -143,25 +140,26 @@ def gen_list_dir(path):
 	return page
 
 
-port = get_port()
-serv_sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=0)
-serv_sck.bind(('', port))
-serv_sck.listen(10)
+if __name__ == "__main__":
+	port = get_port()
+	serv_sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto=0)
+	serv_sck.bind(('', port))
+	serv_sck.listen(10)
+	print("Serving HTTP on %s port %d ..." % serv_sck.getsockname())
 
-print("Serving HTTP on %s port %d ..." % serv_sck.getsockname())
-
-try:
-	while True:
-		client_sck, client_addr = serv_sck.accept()
-		try:
-			check_client(client_sck, client_addr[0])
-		except:
-			content = gen_err_page("500 Internal Server Error")
-			send_answer(client_sck, "500 Internal Server Error", data=content)
-			print("500 Internal Server Error")
-		finally:
-			client_sck.close()
-except KeyboardInterrupt:
-	print("\nKeyboardInterrupt")
-finally:
-	serv_sck.close()
+	try:
+		while True:
+			client_sck, client_addr = serv_sck.accept()
+			try:
+				check_client(client_sck, client_addr[0])
+			except:
+				content = gen_err_page("500 Internal Server Error")
+				send_answer(client_sck, "500 Internal Server Error",
+				            "text/html", content)
+				print("\n500 Internal Server Error")
+			finally:
+				client_sck.close()
+	except KeyboardInterrupt:
+		print("\nKeyboardInterrupt")
+	finally:
+		serv_sck.close()
